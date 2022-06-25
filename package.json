@@ -9,6 +9,7 @@
     "hardhat": "^2.9.9"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.6.0",
     "coverage": "^0.4.1",
     "dotenv": "^16.0.1",
     "hardhat-etherscan": "^1.0.1"
