@@ -14,8 +14,8 @@ contract Staking {
     IERC20 lpToken = IERC20(lpTokenAddress);
     IERC20 rewardToken = IERC20(rewardTokenAddress);
 
-    event Stake(address indexed staker, uint256 _amount);
-    event Unstake(address indexed staker, uint256 _amount);
+    event Staked(address indexed staker, uint256 _amount);
+    event Unstaked(address indexed staker, uint256 _amount);
 
     struct Stake {
         uint64 timestamp;
@@ -41,15 +41,15 @@ contract Staking {
         _;
     }
 
-    function stake(uint256 _amount) {
+    function stake(uint256 _amount) public {
         lpToken.transferFrom(msg.sender, address(this), _amount);
-        stakes[msg.sender].push(Stake(block.timestamp, _amount));
+        stakes[msg.sender].push(Stake(uint64(block.timestamp), _amount));
         uint256 rewardsAmount = (_amount * percent) / 100;
-        rewards[msg.sender].push(Reward(block.timestamp, rewardsAmount));
-        emit Stake(msg.sender, _amount);
+        rewards[msg.sender].push(Reward(uint64(block.timestamp), rewardsAmount));
+        emit Staked(msg.sender, _amount);
     }
 
-    function unstake(uint256 _amount) {
+    function unstake(uint256 _amount) public {
         Stake[] storage myStakes = stakes[msg.sender];
         //delete unfreezed Stakes
         for (uint256 i = myStakes.length - 1; i >= 0; i--) {
@@ -61,10 +61,10 @@ contract Staking {
         }
         require(_amount <= unlockedFunds[msg.sender], "insufficient funds");
         lpToken.transfer(msg.sender, _amount);
-        emit Unstake(msg.sender, _amount);
+        emit Unstaked(msg.sender, _amount);
     }
 
-    function claim(uint256 _amount) {
+    function claim(uint256 _amount) public {
         Reward[] storage myReward = rewards[msg.sender];
         //delete unfreezed Rewards
         for (uint256 i = myReward.length - 1; i >= 0; i--) {
@@ -78,19 +78,19 @@ contract Staking {
         rewardToken.transfer(msg.sender, _amount);
     }
 
-    function setPercent(uint8 _percent) onlyOwner {
+    function setPercent(uint8 _percent) public onlyOwner {
         percent = _percent;
     }
 
-    function setTimeToFreezLp(uint32 _time) onlyOwner {
+    function setTimeToFreezLp(uint32 _time) public onlyOwner {
         timeToFreezLp = _time;
     }
 
-    function setTimeToReward(uint32 _time) onlyOwner {
+    function setTimeToReward(uint32 _time) public onlyOwner {
         timeToReward = _time;
     }
 
-    function setLpTokenAddress(address _address) onlyOwner {
+    function setLpTokenAddress(address _address) public onlyOwner {
         lpTokenAddress= _address;
     }
 }
