@@ -2,6 +2,10 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("MyStaking", function () {
+  let LpTokenFactory;
+  let lpToken;
+  let RewardTokenFactory;
+  let rewardToken;
   let MyStakingFactory;
   let myStaking;
   let decimals = 18;
@@ -9,19 +13,40 @@ describe("MyStaking", function () {
   let owner;
   let user1;
   let user2;
-  let user3;
-  let user4;
-  let user5;
+
 
   beforeEach(async () => {
-    MyStakingFactory = await hre.ethers.getContractFactory("Staking");
-    myStaking = await MyStakingFactory.deploy(
-      name,
-      symbols,
+
+    LpTokenFactory = await hre.ethers.getContractFactory("LpToken");
+    lpToken = await LpTokenFactory.deploy(
+      "LpToken",
+      "LPT", 
       decimals,
       initialSupply
     );
-    [owner, user1, user2, user3, user4, user5] = await ethers.getSigners();
+    await lpToken.deployed();
+
+    RewardTokenFactory = await hre.ethers.getContractFactory("RewardToken");
+    rewardToken = await RewardTokenFactory.deploy(
+      "RewardToken",
+      "RWD", 
+      decimals,
+      initialSupply
+    );
+    await rewardToken.deployed();
+
+    MyStakingFactory = await hre.ethers.getContractFactory("Staking");
+    myStaking = await MyStakingFactory.deploy(
+      lpToken.address,
+      rewardToken.address
+    );
+    await myStaking.deployed();
+
+    [owner, user1, user2] = await ethers.getSigners();
+    lpToken.transfer(user1.address, ethers.utils.parseEther("10"));
+    lpToken.transfer(user2.address, ethers.utils.parseEther("10"));
+    lpToken.connect(user1).approve(myStaking.address, ethers.utils.parseEther("10"));
+    lpToken.connect(user2).approve(myStaking.address, ethers.utils.parseEther("10"));
   });
 
   /**

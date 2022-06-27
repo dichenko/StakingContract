@@ -1,5 +1,8 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity 0.8.15;
+
+//rewardTokenAddress = 0x69746B384A87977c29459FbF82Ce8e447667E580;
+//lpTokenAddress = 0x8bc17512ac769571e574c5333d3e7830adb9e6f0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -7,9 +10,9 @@ contract Staking {
     uint8 percent = 20;
     uint32 timeToFreezLp = 20 minutes;
     uint32 timeToReward = 10 minutes;
-    address owner;
-    address rewardTokenAddress = 0xC2544D5C72b44162561e4c1b336e06cD27CA93c8;
-    address lpTokenAddress = 0x4aAded56bd7c69861E8654719195fCA9C670EB45; //DAI
+    address public owner;
+    address rewardTokenAddress;
+    address lpTokenAddress;
 
     IERC20 lpToken = IERC20(lpTokenAddress);
     IERC20 rewardToken = IERC20(rewardTokenAddress);
@@ -32,8 +35,10 @@ contract Staking {
     mapping(address => uint256) public unlockedFunds;
     mapping(address => uint256) public unlockedRewards;
 
-    constructor() {
+    constructor(address _lpAddress, address _rewardAddress) {
         owner = msg.sender;
+        rewardTokenAddress = _rewardAddress;
+        lpTokenAddress = _lpAddress;
     }
 
     modifier onlyOwner() {
@@ -45,14 +50,16 @@ contract Staking {
         lpToken.transferFrom(msg.sender, address(this), _amount);
         stakes[msg.sender].push(Stake(uint64(block.timestamp), _amount));
         uint256 rewardsAmount = (_amount * percent) / 100;
-        rewards[msg.sender].push(Reward(uint64(block.timestamp), rewardsAmount));
+        rewards[msg.sender].push(
+            Reward(uint64(block.timestamp), rewardsAmount)
+        );
         emit Staked(msg.sender, _amount);
     }
 
     function unstake(uint256 _amount) public {
         Stake[] storage myStakes = stakes[msg.sender];
         //delete unfreezed Stakes
-        for (uint256 i = myStakes.length - 1; i >= 0; i--) {
+        for (uint256 i = 0; i <= myStakes.length - 1; i++) {
             if (myStakes[i].timestamp + timeToFreezLp <= block.timestamp) {
                 unlockedFunds[msg.sender] += myStakes[i].amount;
                 myStakes[i] = myStakes[myStakes.length - 1];
@@ -67,7 +74,7 @@ contract Staking {
     function claim(uint256 _amount) public {
         Reward[] storage myReward = rewards[msg.sender];
         //delete unfreezed Rewards
-        for (uint256 i = myReward.length - 1; i >= 0; i--) {
+        for (uint256 i = 0; i <= myReward.length - 1; i++) {
             if (myReward[i].timestamp + timeToReward <= block.timestamp) {
                 unlockedRewards[msg.sender] += myReward[i].amount;
                 myReward[i] = myReward[myReward.length - 1];
@@ -91,6 +98,10 @@ contract Staking {
     }
 
     function setLpTokenAddress(address _address) public onlyOwner {
-        lpTokenAddress= _address;
+        lpTokenAddress = _address;
     }
+
+    // function owner() public view returns (address){
+    //     return owner;
+    // }
 }
