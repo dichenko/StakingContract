@@ -6,39 +6,36 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Staking {
-    uint8 percent = 20;
+contract StakingOLD {
+    uint8 public percent = 10;
     uint32 timeToFreezLp = 20 minutes;
     uint32 timeToReward = 10 minutes;
     address public owner;
-    address rewardTokenAddress;
-    address lpTokenAddress;
 
-    IERC20 lpToken = IERC20(lpTokenAddress);
-    IERC20 rewardToken = IERC20(rewardTokenAddress);
+    IERC20 rewardToken;
+    IERC20 lpToken;
 
-    event Staked(address indexed staker, uint256 _amount);
-    event Unstaked(address indexed staker, uint256 _amount);
+    event Staked(uint timestamp, address indexed staker, uint256 _amount);
+    event Unstaked(uint timestamp, address indexed staker, uint256 _amount);
 
     struct Stake {
-        uint64 timestamp;
+        uint timestamp;
         uint256 amount;
     }
 
     struct Reward {
-        uint64 timestamp;
+        uint timestamp;
         uint256 amount;
     }
 
-    mapping(address => Stake[]) public stakes;
-    mapping(address => Reward[]) public rewards;
-    mapping(address => uint256) public unlockedFunds;
-    mapping(address => uint256) public unlockedRewards;
+    mapping(address => Stake) public stakes;
+    mapping(address => Reward) public rewards;
+    
 
     constructor(address _lpAddress, address _rewardAddress) {
         owner = msg.sender;
-        rewardTokenAddress = _rewardAddress;
-        lpTokenAddress = _lpAddress;
+        lpToken = IERC20(_lpAddress);
+        rewardToken = IERC20(_rewardAddress);
     }
 
     modifier onlyOwner() {
@@ -48,39 +45,22 @@ contract Staking {
 
     function stake(uint256 _amount) public {
         lpToken.transferFrom(msg.sender, address(this), _amount);
-        stakes[msg.sender].push(Stake(uint64(block.timestamp), _amount));
+        stakes[msg.sender].amount += _amount;
+        stakes[msg.sender].timestamp  = block.timestamp;
         uint256 rewardsAmount = (_amount * percent) / 100;
-        rewards[msg.sender].push(
-            Reward(uint64(block.timestamp), rewardsAmount)
-        );
-        emit Staked(msg.sender, _amount);
+        rewards[msg.sender].amount += rewardsAmount;
+        rewards[msg.sender].timestamp  = block.timestamp;
+        emit Staked(block.timestamp, msg.sender, _amount);
     }
 
     function unstake(uint256 _amount) public {
-        Stake[] storage myStakes = stakes[msg.sender];
-        //delete unfreezed Stakes
-        for (uint256 i = 0; i <= myStakes.length - 1; i++) {
-            if (myStakes[i].timestamp + timeToFreezLp <= block.timestamp) {
-                unlockedFunds[msg.sender] += myStakes[i].amount;
-                myStakes[i] = myStakes[myStakes.length - 1];
-                myStakes.pop();
-            }
-        }
-        require(_amount <= unlockedFunds[msg.sender], "insufficient funds");
+        require(block.timestamp >= stakes[msg.sender].timestamp + timeToFreezLp, "Time lock");
+        require(_amount <= stakes[msg.sender].amount, "Insufficient funds");
         lpToken.transfer(msg.sender, _amount);
-        emit Unstaked(msg.sender, _amount);
+        emit Unstaked(block.timestamp, msg.sender, _amount);
     }
 
     function claim(uint256 _amount) public {
-        Reward[] storage myReward = rewards[msg.sender];
-        //delete unfreezed Rewards
-        for (uint256 i = 0; i <= myReward.length - 1; i++) {
-            if (myReward[i].timestamp + timeToReward <= block.timestamp) {
-                unlockedRewards[msg.sender] += myReward[i].amount;
-                myReward[i] = myReward[myReward.length - 1];
-                myReward.pop();
-            }
-        }
         require(_amount <= unlockedRewards[msg.sender], "insufficient funds");
         rewardToken.transfer(msg.sender, _amount);
     }
@@ -97,8 +77,8 @@ contract Staking {
         timeToReward = _time;
     }
 
-    function setLpTokenAddress(address _address) public onlyOwner {
-        lpTokenAddress = _address;
+    function setRewardTokenAddress(address _address) public onlyOwner {
+        rewardTokenAddress = _address;
     }
 
     // function owner() public view returns (address){
