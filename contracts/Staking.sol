@@ -6,17 +6,17 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract StakingOLD {
+contract Staking {
     uint8 public percent = 10;
-    uint32 timeToFreezLp = 20 minutes;
-    uint32 timeToReward = 10 minutes;
+    uint32 public timeToFreezLp = 20 minutes;
+    uint32 public timeToReward = 10 minutes;
     address public owner;
 
     IERC20 rewardToken;
     IERC20 lpToken;
 
-    event Staked(uint timestamp, address indexed staker, uint256 _amount);
-    event Unstaked(uint timestamp, address indexed staker, uint256 _amount);
+    event Staked(address indexed staker, uint256 _amount);
+    event Unstaked(address indexed staker, uint256 _amount);
 
     struct Stake {
         uint timestamp;
@@ -50,19 +50,21 @@ contract StakingOLD {
         uint256 rewardsAmount = (_amount * percent) / 100;
         rewards[msg.sender].amount += rewardsAmount;
         rewards[msg.sender].timestamp  = block.timestamp;
-        emit Staked(block.timestamp, msg.sender, _amount);
+        emit Staked(msg.sender, _amount);
     }
 
-    function unstake(uint256 _amount) public {
+    function unstake() public {
         require(block.timestamp >= stakes[msg.sender].timestamp + timeToFreezLp, "Time lock");
-        require(_amount <= stakes[msg.sender].amount, "Insufficient funds");
+        uint _amount = stakes[msg.sender].amount;
         lpToken.transfer(msg.sender, _amount);
-        emit Unstaked(block.timestamp, msg.sender, _amount);
+        stakes[msg.sender].amount = 0;
+        emit Unstaked(msg.sender, _amount);
     }
 
-    function claim(uint256 _amount) public {
-        require(_amount <= unlockedRewards[msg.sender], "insufficient funds");
-        rewardToken.transfer(msg.sender, _amount);
+    function claim() public {
+        require(block.timestamp >= rewards[msg.sender].timestamp + timeToReward, "Time lock");
+        rewardToken.transfer(msg.sender, rewards[msg.sender].amount);
+        rewards[msg.sender].amount = 0;
     }
 
     function setPercent(uint8 _percent) public onlyOwner {
@@ -77,11 +79,5 @@ contract StakingOLD {
         timeToReward = _time;
     }
 
-    function setRewardTokenAddress(address _address) public onlyOwner {
-        rewardTokenAddress = _address;
-    }
 
-    // function owner() public view returns (address){
-    //     return owner;
-    // }
 }
