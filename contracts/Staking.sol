@@ -1,8 +1,10 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.15;
 
-//rewardTokenAddress = 0x69746B384A87977c29459FbF82Ce8e447667E580;
+
 //lpTokenAddress = 0x8bc17512ac769571e574c5333d3e7830adb9e6f0;
+//rewardToken deployed to: 0xB97146E2a29a27794274FFC42e5776DDaa3A5b01
+//MyStaking deployed to: 0x8bD4C9b6D9bdd28F88F3eBB9Ab292722Ab923B59
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
