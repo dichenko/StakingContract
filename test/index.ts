@@ -117,12 +117,11 @@ describe("MyStaking", function () {
       await network.provider.send("evm_increaseTime", [lockTime + 1]);
       let tx2 = await myStaking.connect(user1).claim();
       expect(await rewardToken.balanceOf(user1.address)).to.equal(
-        percent * 1000 / 100)
+        (percent * 1000) / 100
       );
     });
   });
 
-  
   describe("Utils", function () {
     it("Should fail setting variables except owner", async function () {
       await expect(myStaking.connect(user1).setPercent(1)).to.be.revertedWith(
