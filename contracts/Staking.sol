@@ -2,8 +2,8 @@
 pragma solidity 0.8.15;
 
 //lpTokenAddress = 0x8bc17512ac769571e574c5333d3e7830adb9e6f0;
-//rewardToken deployed to: 0xB97146E2a29a27794274FFC42e5776DDaa3A5b01
-//MyStaking deployed to: 0x8bD4C9b6D9bdd28F88F3eBB9Ab292722Ab923B59
+//rewardToken deployed to: 0x9eAC490f53d7d4CAD2D0B3F08937734916963f82
+//MyStaking deployed to: 
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 

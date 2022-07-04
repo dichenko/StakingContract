@@ -142,7 +142,7 @@ describe("MyStaking", function () {
       const tx3 = await myStaking.setTimeToLockLp(1);
       expect(await myStaking.percent()).to.equal(1);
       expect(await myStaking.timeToLockReward()).to.equal(1);
-      expect(await myStaking.timeToLockLp()).to.equal(1);
+      expect(await myStaking.tvimeToLockLp()).to.equal(1);
     });
   });
 });
