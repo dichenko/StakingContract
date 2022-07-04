@@ -8,7 +8,6 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "@nomiclabs/hardhat-etherscan";
 
-import './tasks/staking-tasks.ts'
 import './tasks/create-pool.ts'
 
 

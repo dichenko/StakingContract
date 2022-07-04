@@ -1,15 +1,13 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const LPADDRESS = "0x8bc17512ac769571e574c5333d3e7830adb9e6f0";
-  const REWATDTOKENADDRESS = "0x9eAC490f53d7d4CAD2D0B3F08937734916963f82";
-
+  
   ///deploy staking contract
   const [deployer] = await ethers.getSigners();
   const MyStakingFactory = await ethers.getContractFactory("Staking");
   const myStaking = await MyStakingFactory.deploy(
-    LPADDRESS,
-    REWATDTOKENADDRESS
+    process.env.LP_TOKEN_ADDRESS,
+    process.env.REWATD_TOKENADDRESS
   );
 
   await myStaking.deployed();
