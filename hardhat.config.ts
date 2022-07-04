@@ -9,6 +9,7 @@ import "solidity-coverage";
 import "@nomiclabs/hardhat-etherscan";
 
 import './tasks/create-pool.ts'
+import './tasks/staking-tasks.ts'
 
 
 const config: HardhatUserConfig = {

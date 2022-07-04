@@ -10,7 +10,6 @@ task("create-pool", "Create a uniswap-v2-poll ETH-ERC20")
   .addParam("tokenAmount", "Amount of ERC20 tokens")
   .setAction(async (taskArgs, hre) => {
     const [owner] = await hre.ethers.getSigners();
-    console.log(Number(await owner.getBalance()));
     const routerAddress = process.env.UNISWAP_V2_ROUTER02;
     const uniswapRouter = await hre.ethers.getContractAt(
       "IUniswapV2Router02",
@@ -23,9 +22,13 @@ task("create-pool", "Create a uniswap-v2-poll ETH-ERC20")
       taskArgs.erc20address as string,
       owner
     );
-    const tx0 = await newToken.mint(ethers.utils.parseEther(taskArgs.tokenAmount));
-    const tx1 = await newToken.approve(routerAddress as string, ethers.utils.parseEther(taskArgs.tokenAmount));
-    
+    const tx0 = await newToken.mint(
+      ethers.utils.parseEther(taskArgs.tokenAmount)
+    );
+    const tx1 = await newToken.approve(
+      routerAddress as string,
+      ethers.utils.parseEther(taskArgs.tokenAmount)
+    );
 
     const result = await uniswapRouter.addLiquidityETH(
       taskArgs.erc20address as string,
@@ -34,7 +37,7 @@ task("create-pool", "Create a uniswap-v2-poll ETH-ERC20")
       0,
       owner.address as string,
       1000000000000,
-      { value: taskArgs.ethAmount, gasLimit: 400000,}
+      { value: taskArgs.ethAmount, gasLimit: 400000 }
     );
     console.log(result);
   });
