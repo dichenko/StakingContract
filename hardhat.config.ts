@@ -8,7 +8,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "@nomiclabs/hardhat-etherscan";
 
-import './tasks/index.ts'
+import './tasks/staking-tasks.ts'
 
 
 const config: HardhatUserConfig = {

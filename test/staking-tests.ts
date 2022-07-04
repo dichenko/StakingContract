@@ -90,10 +90,10 @@ describe("MyStaking", function () {
     });
 
     it("Should unstake when lock time is up", async function () {
-      let lockTime = await myStaking.timeToFreezLp();
+      let lockTime = Number(await myStaking.timeToLockLp());
       let tx1 = await myStaking.connect(user1).stake(1000);
       let lpTokenBalanseBefore = await lpToken.balanceOf(user1.address);
-      await network.provider.send("evm_increaseTime", [lockTime + 1]);
+      await network.provider.send("evm_increaseTime", [lockTime]);
       let tx2 = await myStaking.connect(user1).unstake();
       expect(await lpToken.balanceOf(user1.address)).to.equal(
         lpTokenBalanseBefore.add(1000)
@@ -111,13 +111,14 @@ describe("MyStaking", function () {
     });
 
     it("Should claim when lock time is up", async function () {
-      let lockTime = await myStaking.timeToReward();
+      let lockTime = Number(await myStaking.timeToLockReward());
       let percent = await myStaking.percent();
+      let decimals = await myStaking.percentDecimals();
       let tx1 = await myStaking.connect(user1).stake(1000);
-      await network.provider.send("evm_increaseTime", [lockTime + 1]);
+      await network.provider.send("evm_increaseTime", [lockTime]);
       let tx2 = await myStaking.connect(user1).claim();
       expect(await rewardToken.balanceOf(user1.address)).to.equal(
-        (percent * 1000) / 100
+        (percent * 1000) / 100**decimals
       );
     });
   });
@@ -128,20 +129,20 @@ describe("MyStaking", function () {
         "You a not an owner!"
       );
       await expect(
-        myStaking.connect(user1).setTimeToReward(1)
+        myStaking.connect(user1).setTimeToLockReward(1)
       ).to.be.revertedWith("You a not an owner!");
       await expect(
-        myStaking.connect(user1).setTimeToFreezLp(1)
+        myStaking.connect(user1).setTimeToLockLp(1)
       ).to.be.revertedWith("You a not an owner!");
     });
 
     it("Should set variables correctly by owner", async function () {
       const tx1 = await myStaking.setPercent(1);
-      const tx2 = await myStaking.setTimeToReward(1);
-      const tx3 = await myStaking.setTimeToFreezLp(1);
+      const tx2 = await myStaking.setTimeToLockReward(1);
+      const tx3 = await myStaking.setTimeToLockLp(1);
       expect(await myStaking.percent()).to.equal(1);
-      expect(await myStaking.timeToReward()).to.equal(1);
-      expect(await myStaking.timeToFreezLp()).to.equal(1);
+      expect(await myStaking.timeToLockReward()).to.equal(1);
+      expect(await myStaking.timeToLockLp()).to.equal(1);
     });
   });
 });

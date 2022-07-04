@@ -8,29 +8,27 @@ pragma solidity 0.8.15;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Staking {
-    uint8 public percent = 10;
-    uint32 public timeToFreezLp = 20 minutes;
-    uint32 public timeToReward = 10 minutes;
+
+    uint public percent = 1150;
+    uint public percentDecimals = 2;
+    uint public timeToLockLp = 20 minutes;
+    uint public timeToLockReward = 10 minutes;
     address public owner;
 
-    IERC20 rewardToken;
-    IERC20 lpToken;
+  struct Stake {
+        uint timestamp;
+        uint amount;
+        uint rewardAmount;
+    }
+
+    mapping(address => Stake) public stakes;
 
     event Staked(address indexed staker, uint256 _amount);
     event Unstaked(address indexed staker, uint256 _amount);
 
-    struct Stake {
-        uint timestamp;
-        uint256 amount;
-    }
+    IERC20 lpToken;
+    IERC20 rewardToken;
 
-    struct Reward {
-        uint timestamp;
-        uint256 amount;
-    }
-
-    mapping(address => Stake) public stakes;
-    mapping(address => Reward) public rewards;
 
     constructor(address _lpAddress, address _rewardAddress) {
         owner = msg.sender;
@@ -43,24 +41,22 @@ contract Staking {
         _;
     }
 
-    ///@notice Transfers LP-tokens from caller balance to staking contract balance, credits reward tokens to caller
+    ///@notice Transfers LP-tokens from caller balance to staking contract balance
     ///@param _amount of LP-tokens
     ///@custom:event Emits Stake event
     function stake(uint256 _amount) public {
         lpToken.transferFrom(msg.sender, address(this), _amount);
         stakes[msg.sender].amount += _amount;
         stakes[msg.sender].timestamp = block.timestamp;
-        uint256 rewardsAmount = (_amount * percent) / 100;
-        rewards[msg.sender].amount += rewardsAmount;
-        rewards[msg.sender].timestamp = block.timestamp;
+        stakes[msg.sender].rewardAmount = _amount * percent / 100 ** percentDecimals;
         emit Staked(msg.sender, _amount);
     }
 
-    ///@notice Transfers LP-tokens from staking contract  to caller balance, after freez time is up
+    ///@notice Transfers LP-tokens from staking contract  to caller balance, after locktime is up
     ///@custom:event Emits Unstake event
     function unstake() public {
         require(
-            block.timestamp >= stakes[msg.sender].timestamp + timeToFreezLp,
+            block.timestamp >= stakes[msg.sender].timestamp + timeToLockLp,
             "Time lock"
         );
         uint _amount = stakes[msg.sender].amount;
@@ -69,26 +65,28 @@ contract Staking {
         emit Unstaked(msg.sender, _amount);
     }
 
-    ///@notice Transfers reward-tokens from staking contract  to caller balance, after freez time is up
+    ///@notice Transfers reward-tokens from staking contract  to caller balance, after locktime is up
     function claim() public {
         require(
-            block.timestamp >= rewards[msg.sender].timestamp + timeToReward,
+            block.timestamp >= stakes[msg.sender].timestamp + timeToLockReward,
             "Time lock"
         );
-        rewardToken.transfer(msg.sender, rewards[msg.sender].amount);
-        rewards[msg.sender].amount = 0;
+        rewardToken.transfer(msg.sender, stakes[msg.sender].rewardAmount);
+        stakes[msg.sender].rewardAmount = 0;
     }
 
     ///@notice Sets reward percent, onlyOwner
-    function setPercent(uint8 _percent) public onlyOwner {
+    function setPercent(uint16 _percent) public onlyOwner {
         percent = _percent;
     }
-    ///@notice Sets freez time for LP-tokens, onlyOwner
-    function setTimeToFreezLp(uint32 _time) public onlyOwner {
-        timeToFreezLp = _time;
+
+    ///@notice Sets lock time for LP-tokens, onlyOwner
+    function setTimeToLockLp(uint _time) public onlyOwner {
+        timeToLockLp = _time;
     }
-    ///@notice Sets freez time for reward tokens, onlyOwner
-    function setTimeToReward(uint32 _time) public onlyOwner {
-        timeToReward = _time;
+
+    ///@notice Sets lock time for reward tokens, onlyOwner
+    function setTimeToLockReward(uint _time) public onlyOwner {
+        timeToLockReward = _time;
     }
 }
